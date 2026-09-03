@@ -288,13 +288,81 @@ def generate_mrp(inp: PeriodInputs, mps_units: Dict[str, float]) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# 7. TOP-LEVEL "RUN ONE PERIOD" FUNCTION — this is what the agent calls
+# 7. DAY-WISE S&OP DISPATCHER (Days 1 to 24 Production & Material Balances)
+# ---------------------------------------------------------------------------
+
+def generate_daily_schedule(inp: PeriodInputs, mps: dict, mrp: dict, days: int = WORKING_DAYS_PER_MONTH) -> dict:
+    """
+    Generates a day-by-day (Day 1 to Day 24) operational S&OP schedule:
+    - Daily SKU Production & Closing FG Inventory Balances.
+    - Daily Raw Material & Packaging Consumption and Stock Depletion Days.
+    """
+    mps_units = mps["mps_units"]
+    demand_units = inp.demand_units
+
+    daily_demand = {sku: demand_units.get(sku, 0.0) / days for sku in SKUS}
+    daily_prod = {sku: mps_units.get(sku, 0.0) / days for sku in SKUS}
+
+    # 1. Build Day-Wise Finished Goods Schedule
+    daily_mps_rows = []
+    
+    for sku in SKUS:
+        open_inv = inp.opening_fg_inventory.get(sku, 0.0)
+        p_rate = daily_prod[sku]
+        d_rate = daily_demand[sku]
+
+        # Row A: Daily Planned Production
+        prod_row = {"SKU": sku, "Metric": "Planned Prod (Units)"}
+        tot_p = 0.0
+        for d in range(1, days + 1):
+            prod_row[f"Day {d}"] = round(p_rate, 0)
+            tot_p += p_rate
+        prod_row["Total / End"] = round(tot_p, 0)
+        daily_mps_rows.append(prod_row)
+
+        # Row B: Projected Closing FG Inventory
+        inv_row = {"SKU": sku, "Metric": "Closing FG Stock (Units)"}
+        curr_inv = open_inv
+        for d in range(1, days + 1):
+            curr_inv = curr_inv + p_rate - d_rate
+            inv_row[f"Day {d}"] = round(curr_inv, 0)
+        inv_row["Total / End"] = round(curr_inv, 0)
+        daily_mps_rows.append(inv_row)
+
+    # 2. Build Day-Wise Material Stock Depletion Schedule
+    daily_mat_rows = []
+    daily_gross_mat_req = explode_bom(mps_units)
+    daily_mat_burn = {m: daily_gross_mat_req[m] / days for m in ALL_MATERIALS}
+
+    for mat in ALL_MATERIALS:
+        stock = inp.opening_material_inventory.get(mat, 0.0) + inp.material_incoming.get(mat, 0.0)
+        burn = daily_mat_burn[mat]
+        m_row = {"Material": mat, "Category": "Raw Material" if mat in RAW_MATERIALS else "Packaging"}
+        stockout_day = None
+        for d in range(1, days + 1):
+            stock -= burn
+            m_row[f"Day {d}"] = round(max(0.0, stock), 1)
+            if stock < 0 and stockout_day is None:
+                stockout_day = d
+        m_row["Ending Stock"] = round(max(0.0, stock), 1)
+        m_row["Status"] = f"⚠️ Stockout Day {stockout_day}" if stockout_day else "✅ OK"
+        daily_mat_rows.append(m_row)
+
+    return {
+        "daily_mps_grid": daily_mps_rows,
+        "daily_material_grid": daily_mat_rows,
+    }
+
+
+# ---------------------------------------------------------------------------
+# 8. TOP-LEVEL "RUN ONE PERIOD" FUNCTION — this is what the agent calls
 # ---------------------------------------------------------------------------
 
 def run_period_plan(inp: PeriodInputs) -> dict:
     mps = generate_mps(inp)
     mrp = generate_mrp(inp, mps["mps_units"])
-    return {"mps": mps, "mrp": mrp}
+    daily = generate_daily_schedule(inp, mps, mrp)
+    return {"mps": mps, "mrp": mrp, "daily": daily}
 
 
 def get_mps_summary_table(mps: dict, demand_units: Dict[str, float], opening_fg: Dict[str, float]) -> list:
