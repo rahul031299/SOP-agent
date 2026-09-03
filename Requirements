@@ -1,2 +1,3 @@
-streamlit>=1.35
-anthropic>=0.34
+streamlit>=1.35.0
+google-generativeai>=0.8.0
+pandas>=2.0.0
