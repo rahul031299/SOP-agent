@@ -223,7 +223,7 @@ if run_clicked or "last_result" in st.session_state:
             workers_required_per_shift=workers_required,
             sku_priority=dict(DEFAULT_SKU_PRIORITY),
         )
-        with st.spinner("Executing deterministic MPS capacity check and MRP explosion..."):
+        with st.spinner("Executing deterministic MPS capacity check, MRP explosion, and Day 1-24 dispatch grid..."):
             result = run_period_plan(inputs)
             st.session_state["last_result"] = result
             st.session_state["last_inputs"] = inputs
@@ -231,7 +231,7 @@ if run_clicked or "last_result" in st.session_state:
         result = st.session_state["last_result"]
         inputs = st.session_state["last_inputs"]
 
-    mps, mrp = result["mps"], result["mrp"]
+    mps, mrp, daily = result["mps"], result["mrp"], result.get("daily", {})
 
     # ---------------------------------------------------------------------------
     # KPI Metrics Header Bar
@@ -258,20 +258,21 @@ if run_clicked or "last_result" in st.session_state:
         st.metric("Reorder Action Items", f"{reorders_needed}", delta="Shortage Risk" if reorders_needed > 0 else "Stocked", delta_color="inverse" if reorders_needed > 0 else "normal")
 
     # ---------------------------------------------------------------------------
-    # Main Tabs: MPS/MRP Results, Gemini Agent Briefing, Reference Data, Export
+    # Main Tabs: MPS/MRP Results, Day-Wise Schedule, Gemini Agent Briefing, Reference, Export
     # ---------------------------------------------------------------------------
-    tab_plan, tab_agent, tab_ref, tab_export = st.tabs([
-        "📊 Production & Material Plan (MPS / MRP)",
+    tab_plan, tab_daily, tab_agent, tab_ref, tab_export = st.tabs([
+        "📊 Monthly S&OP Summary (MPS / MRP)",
+        "📅 Day-Wise Dispatch Schedule (Days 1–24)",
         "🤖 Gemini AI Agent Briefing",
         "⚙️ BOM & Capacity Reference",
         "📥 Export Reports"
     ])
 
     # ---------------------------------------------------------------------------
-    # TAB 1: MPS & MRP TABLES AND VISUALIZATIONS
+    # TAB 1: MPS & MRP MONTHLY SUMMARY TABLES AND VISUALIZATIONS
     # ---------------------------------------------------------------------------
     with tab_plan:
-        st.subheader("📋 Master Production Schedule (MPS)")
+        st.subheader("📋 Master Production Schedule (MPS) Summary")
         
         mps_rows = get_mps_summary_table(mps, inputs.demand_units, inputs.opening_fg_inventory)
         df_mps = pd.DataFrame(mps_rows)
@@ -300,7 +301,7 @@ if run_clicked or "last_result" in st.session_state:
         df_chart = df_mps.set_index("SKU")[["Gross Demand", "Planned Production"]]
         st.bar_chart(df_chart)
 
-        st.subheader("📦 Material Requirement Plan (MRP)")
+        st.subheader("📦 Material Requirement Plan (MRP) Summary")
         mrp_rows = get_mrp_summary_table(mrp, inputs.opening_material_inventory, inputs.material_incoming)
         df_mrp = pd.DataFrame(mrp_rows)
 
@@ -316,7 +317,30 @@ if run_clicked or "last_result" in st.session_state:
         )
 
     # ---------------------------------------------------------------------------
-    # TAB 2: GEMINI AI AGENT EXECUTIVE BRIEFING
+    # TAB 2: DAY-WISE S&OP DISPATCH SCHEDULE (DAYS 1 TO 24)
+    # ---------------------------------------------------------------------------
+    with tab_daily:
+        st.subheader("📅 Day-by-Day Master Production Schedule (Days 1 to 24)")
+        st.caption(
+            "Detailed operational dispatch grid allocating planned production units and projected closing inventory "
+            "for each SKU across the 24 working days of the period."
+        )
+        
+        df_daily_mps = pd.DataFrame(daily.get("daily_mps_grid", []))
+        st.dataframe(df_daily_mps, use_container_width=True)
+
+        st.divider()
+        st.subheader("📦 Day-by-Day Raw Material & Packaging Depletion Schedule")
+        st.caption(
+            "Tracks exact daily inventory balances for raw materials and packaging from Day 1 to Day 24, "
+            "highlighting the **exact day of stockout** if reorders are not initiated within lead times."
+        )
+        
+        df_daily_mat = pd.DataFrame(daily.get("daily_material_grid", []))
+        st.dataframe(df_daily_mat, use_container_width=True)
+
+    # ---------------------------------------------------------------------------
+    # TAB 3: GEMINI AI AGENT EXECUTIVE BRIEFING
     # ---------------------------------------------------------------------------
     with tab_agent:
         st.subheader("🤖 S&OP AI Agent Executive Briefing")
@@ -380,7 +404,7 @@ MRP Data:
                 st.info("Tip: Ensure your API key is valid and check model availability in your region.")
 
     # ---------------------------------------------------------------------------
-    # TAB 3: REFERENCE DATA
+    # TAB 4: REFERENCE DATA
     # ---------------------------------------------------------------------------
     with tab_ref:
         st.subheader("⚙️ Industry Process & BOM Reference Specs")
@@ -417,36 +441,45 @@ MRP Data:
             st.dataframe(df_lead, use_container_width=True)
 
     # ---------------------------------------------------------------------------
-    # TAB 4: EXPORT REPORTS
+    # TAB 5: EXPORT REPORTS
     # ---------------------------------------------------------------------------
     with tab_export:
         st.subheader("📥 Export S&OP Reports for Phase 3 Deliverables")
-        st.write("Download period MPS, MRP, and raw JSON plans for report documentation and presentations.")
+        st.write("Download period monthly & day-wise MPS, MRP, and raw JSON plans for report documentation and presentations.")
         
-        exp_col1, exp_col2, exp_col3 = st.columns(3)
+        exp_col1, exp_col2, exp_col3, exp_col4 = st.columns(4)
         
         with exp_col1:
             csv_mps = df_mps.to_csv(index=False).encode('utf-8')
             st.download_button(
-                label="📄 Download MPS Report (CSV)",
+                label="📄 Monthly MPS Report (CSV)",
                 data=csv_mps,
-                file_name=f"MPS_Plan_{inputs.period_label.replace(' ', '_')}.csv",
+                file_name=f"MPS_Monthly_{inputs.period_label.replace(' ', '_')}.csv",
                 mime="text/csv"
             )
 
         with exp_col2:
             csv_mrp = df_mrp.to_csv(index=False).encode('utf-8')
             st.download_button(
-                label="📄 Download MRP Report (CSV)",
+                label="📄 Monthly MRP Report (CSV)",
                 data=csv_mrp,
-                file_name=f"MRP_Plan_{inputs.period_label.replace(' ', '_')}.csv",
+                file_name=f"MRP_Monthly_{inputs.period_label.replace(' ', '_')}.csv",
                 mime="text/csv"
             )
 
         with exp_col3:
+            csv_daily_mps = pd.DataFrame(daily.get("daily_mps_grid", [])).to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="📅 Day-Wise Schedule (CSV)",
+                data=csv_daily_mps,
+                file_name=f"SOP_DayWise_Schedule_{inputs.period_label.replace(' ', '_')}.csv",
+                mime="text/csv"
+            )
+
+        with exp_col4:
             json_data = json.dumps(result, indent=2).encode('utf-8')
             st.download_button(
-                label="📦 Download Full S&OP (JSON)",
+                label="📦 Full S&OP Plan (JSON)",
                 data=json_data,
                 file_name=f"SOP_Full_Plan_{inputs.period_label.replace(' ', '_')}.json",
                 mime="application/json"
