@@ -13,11 +13,17 @@ Run locally:
 """
 
 import os
+import sys
 import json
 import pandas as pd
 import streamlit as st
 
-# Safe import for Google Generative AI to prevent app crash if package is installing/missing
+# Ensure current directory is at the top of sys.path so Streamlit Cloud finds sop_engine.py
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+if CURRENT_DIR not in sys.path:
+    sys.path.insert(0, CURRENT_DIR)
+
+# Safe import for Google Generative AI
 try:
     import google.generativeai as genai
     HAS_GEMINI = True
@@ -25,12 +31,18 @@ except ImportError:
     genai = None
     HAS_GEMINI = False
 
-from sop_engine import (
-    PeriodInputs, run_period_plan, SKUS, ALL_MATERIALS, RAW_MATERIALS, PACKAGING_MATERIALS,
-    DEFAULT_SKU_PRIORITY, UNIT_WEIGHT_KG, PACKING_RATE_UPH, PROCESS_RATE_TPH,
-    BOM_PER_KG_MIX, PACKAGING_BOM, LEAD_TIME_DAYS, MIN_ORDER_LOT,
-    get_mps_summary_table, get_mrp_summary_table
-)
+# Safe import for sop_engine
+try:
+    from sop_engine import (
+        PeriodInputs, run_period_plan, SKUS, ALL_MATERIALS, RAW_MATERIALS, PACKAGING_MATERIALS,
+        DEFAULT_SKU_PRIORITY, UNIT_WEIGHT_KG, PACKING_RATE_UPH, PROCESS_RATE_TPH,
+        BOM_PER_KG_MIX, PACKAGING_BOM, LEAD_TIME_DAYS, MIN_ORDER_LOT,
+        get_mps_summary_table, get_mrp_summary_table
+    )
+    HAS_ENGINE = True
+except ImportError as e:
+    ENGINE_ERROR = str(e)
+    HAS_ENGINE = False
 
 # ---------------------------------------------------------------------------
 # Page Configuration & Styling (Must be the first Streamlit command)
@@ -67,16 +79,24 @@ st.markdown("""
         border-radius: 8px;
     }
     </style>
-""", unsafe_allow_headers=True)
+""", unsafe_allow_html=True)
 
-st.markdown('<div class="main-header">🍦 Ice Cream S&OP Intelligence Agent</div>', unsafe_allow_headers=True)
+st.markdown('<div class="main-header">🍦 Ice Cream S&OP Intelligence Agent</div>', unsafe_allow_html=True)
 st.markdown(
     '<div class="sub-header">'
     'Deterministic Master Production Schedule (MPS) & Material Requirements Planning (MRP) Engine + '
     '<strong>Google Gemini AI Narration Layer</strong>'
     '</div>',
-    unsafe_allow_headers=True
+    unsafe_allow_html=True
 )
+
+if not HAS_ENGINE:
+    st.error(
+        f"⚠️ **Engine File Missing on Server**: `sop_engine.py` could not be loaded.\n\n"
+        f"**Details**: `{ENGINE_ERROR}`\n\n"
+        "**Solution**: Please ensure `sop_engine.py` is located in the same GitHub directory as `App.py` / `app.py` and push it to GitHub."
+    )
+    st.stop()
 
 # ---------------------------------------------------------------------------
 # Sidebar: API Key Configuration & Operational Controls
