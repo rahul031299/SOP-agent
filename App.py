@@ -1,5 +1,5 @@
 """
-Streamlit front-end for the Ice Cream S&OP Agent powered by Google Gemini API.
+Streamlit front-end for the Ice Cream S&OP Intelligence Agent powered by Google Gemini API.
 
 Architecture:
   1. User inputs operational parameters (demand, inventory, manpower, incoming shipments).
@@ -45,7 +45,7 @@ except ImportError as e:
     HAS_ENGINE = False
 
 # ---------------------------------------------------------------------------
-# Page Configuration & Styling (Must be the first Streamlit command)
+# Page Configuration & Advanced Aesthetic Styling
 # ---------------------------------------------------------------------------
 st.set_page_config(
     page_title="Ice Cream S&OP Intelligence Agent",
@@ -54,41 +54,140 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for polished aesthetics
+# Custom Premium CSS Design System
 st.markdown("""
     <style>
-    .main-header {
-        font-size: 2.2rem;
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    * {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .hero-container {
+        background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
+        border-radius: 16px;
+        padding: 2.2rem 2.5rem;
+        color: #FFFFFF;
+        box-shadow: 0 10px 25px -5px rgba(49, 46, 129, 0.3);
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-title {
+        font-size: 2.4rem;
         font-weight: 700;
-        color: #1E293B;
-        margin-bottom: 0.2rem;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.4rem;
+        color: #FFFFFF;
     }
-    .sub-header {
-        font-size: 1.05rem;
-        color: #64748B;
-        margin-bottom: 1.5rem;
+    
+    .hero-subtitle {
+        font-size: 1.1rem;
+        color: #E0E7FF;
+        font-weight: 400;
+        max-width: 850px;
+        line-height: 1.5;
     }
-    .metric-card {
-        background-color: #F8FAFC;
+
+    .status-badge {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 0.4rem 0.9rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #818CF8;
+        margin-bottom: 1rem;
+    }
+
+    .kpi-card {
+        background: #FFFFFF;
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
         border: 1px solid #E2E8F0;
-        border-radius: 8px;
-        padding: 1rem;
-        text-align: center;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    .stAlert {
+
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+    }
+
+    .kpi-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #64748B;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.4rem;
+    }
+
+    .kpi-value {
+        font-size: 1.9rem;
+        font-weight: 700;
+        color: #0F172A;
+    }
+
+    .kpi-sub {
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-top: 0.3rem;
+    }
+
+    .sub-green { color: #10B981; }
+    .sub-amber { color: #F59E0B; }
+    .sub-rose { color: #EF4444; }
+
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background-color: #F1F5F9;
+        padding: 6px;
+        border-radius: 12px;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        height: 44px;
+        white-space: pre;
         border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #475569;
+        padding: 0 16px;
+    }
+
+    .stTabs [aria-selected="true"] {
+        background-color: #FFFFFF !important;
+        color: #4338CA !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+    
+    .ai-box {
+        background-color: #F8FAFC;
+        border-left: 4px solid #6366F1;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 1rem;
     }
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="main-header">🍦 Ice Cream S&OP Intelligence Agent</div>', unsafe_allow_html=True)
-st.markdown(
-    '<div class="sub-header">'
-    'Deterministic Master Production Schedule (MPS) & Material Requirements Planning (MRP) Engine + '
-    '<strong>Google Gemini AI Narration Layer</strong>'
-    '</div>',
-    unsafe_allow_html=True
-)
+# ---------------------------------------------------------------------------
+# Hero Banner Header
+# ---------------------------------------------------------------------------
+st.markdown("""
+    <div class="hero-container">
+        <div class="status-badge">⚡ Enterprise S&OP Planning Engine v3.0</div>
+        <div class="hero-title">🍦 Ice Cream S&OP Intelligence Agent</div>
+        <div class="hero-subtitle">
+            Deterministic Master Production Schedule (MPS) & Material Requirements Planning (MRP) Engine 
+            integrated with <strong>Google Gemini Generative AI Executive Briefing</strong>.
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
 if not HAS_ENGINE:
     st.error(
@@ -102,7 +201,7 @@ if not HAS_ENGINE:
 # Sidebar: API Key Configuration & Operational Controls
 # ---------------------------------------------------------------------------
 with st.sidebar:
-    st.header("🔑 Gemini API Setup")
+    st.markdown("### 🔑 Gemini API Control")
     
     # Safe retrieval of secrets or env var for pre-configured key
     default_key = ""
@@ -112,7 +211,6 @@ with st.sidebar:
         elif "GOOGLE_API_KEY" in st.secrets:
             default_key = st.secrets["GOOGLE_API_KEY"]
     except Exception:
-        # st.secrets raises an exception if secrets.toml does not exist
         pass
 
     if not default_key:
@@ -122,44 +220,44 @@ with st.sidebar:
         "Google Gemini API Key",
         value=default_key,
         type="password",
-        help="Get your API key free at https://aistudio.google.com/"
+        help="Get your free API key at https://aistudio.google.com/"
     )
     
     if api_key:
-        st.success("API Key detected")
+        st.success("✅ API Key Connected")
     else:
-        st.info("Enter Gemini API Key to enable AI Agent Briefing")
+        st.info("💡 Enter key to unlock AI Agent Briefings")
 
     st.divider()
-    st.header("⚡ Plant & Capacity Setup")
+    st.markdown("### ⚙️ Production Constraints")
     shifts_per_day = st.slider("Shifts per day (8 hrs/shift)", 1, 3, 2)
     workers_required = st.number_input("Workers required per shift", value=14, min_value=1)
     workers_available = st.number_input(
         "Workers available this period", 
         value=14, 
         min_value=0,
-        help="Simulate manpower shortages by reducing this number below baseline."
+        help="Simulate staff shortages by reducing this number."
     )
 
     st.divider()
-    st.header("🎯 Target Model")
+    st.markdown("### 🤖 Intelligence Model")
     model_choice = st.selectbox(
         "Gemini Model",
         ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp", "gemini-pro"],
         index=0,
-        help="Recommended: gemini-1.5-flash for fast, reliable reasoning."
+        help="Recommended: gemini-1.5-flash for high performance."
     )
 
 # ---------------------------------------------------------------------------
 # Main Form: Inputs Section
 # ---------------------------------------------------------------------------
-with st.expander("📝 1. Enter Period Parameters (Demand, Inventory & In-Transit)", expanded=True):
+with st.expander("📝 1. Operational Input Parameters (Demand, Inventory & In-Transit)", expanded=True):
     period_label = st.text_input("Planning Period Label", value="Month 4 (Peak Season Opening)")
     
     col_d, col_i = st.columns(2)
     
     with col_d:
-        st.subheader("Gross Demand Forecast (Units)")
+        st.markdown("#### 📈 Gross Demand Forecast (Units)")
         demand_units = {}
         d_cols = st.columns(len(SKUS))
         default_demands = {"Cup": 60000, "Stick": 90000, "Cone": 30000, "Pack200": 20000, "Pack500": 8000}
@@ -170,7 +268,7 @@ with st.expander("📝 1. Enter Period Parameters (Demand, Inventory & In-Transi
                 )
 
     with col_i:
-        st.subheader("Opening Finished Goods Stock (Units)")
+        st.markdown("#### 🏢 Opening Finished Goods Stock (Units)")
         opening_fg = {}
         i_cols = st.columns(len(SKUS))
         default_fg = {"Cup": 5000, "Stick": 8000, "Cone": 3000, "Pack200": 2000, "Pack500": 1000}
@@ -180,8 +278,9 @@ with st.expander("📝 1. Enter Period Parameters (Demand, Inventory & In-Transi
                     f"{sku}", value=default_fg.get(sku, 2000), min_value=0, step=500, key=f"i_{sku}"
                 )
 
-    st.subheader("Raw Materials & Packaging Inventory")
-    mat_tab1, mat_tab2 = st.tabs(["Raw Materials Stock & Incoming", "Packaging Stock & Incoming"])
+    st.divider()
+    st.markdown("#### 📦 Raw Materials & Packaging Inventory")
+    mat_tab1, mat_tab2 = st.tabs(["🌾 Raw Materials Stock & In-Transit", "🏷️ Packaging Stock & In-Transit"])
     
     opening_materials = {}
     material_incoming = {}
@@ -205,7 +304,7 @@ with st.expander("📝 1. Enter Period Parameters (Demand, Inventory & In-Transi
                 opening_materials[mat] = st.number_input("On Hand (units)", value=default_pack_mat, min_value=0, key=f"m_{mat}")
                 material_incoming[mat] = st.number_input("In-Transit (units)", value=0, min_value=0, key=f"inc_{mat}")
 
-run_clicked = st.button("🚀 Compute S&OP Plan & Generate AI Briefing", type="primary", use_container_width=True)
+run_clicked = st.button("⚡ Run Deterministic S&OP Engine & AI Agent", type="primary", use_container_width=True)
 
 # ---------------------------------------------------------------------------
 # S&OP Calculation & Results Display
@@ -223,7 +322,7 @@ if run_clicked or "last_result" in st.session_state:
             workers_required_per_shift=workers_required,
             sku_priority=dict(DEFAULT_SKU_PRIORITY),
         )
-        with st.spinner("Executing deterministic MPS capacity check, MRP explosion, and Day 1-24 dispatch grid..."):
+        with st.spinner("Calculating deterministic MPS capacity check, MRP explosion, and Day 1-24 dispatch grid..."):
             result = run_period_plan(inputs)
             st.session_state["last_result"] = result
             st.session_state["last_inputs"] = inputs
@@ -234,9 +333,9 @@ if run_clicked or "last_result" in st.session_state:
     mps, mrp, daily = result["mps"], result["mrp"], result.get("daily", {})
 
     # ---------------------------------------------------------------------------
-    # KPI Metrics Header Bar
+    # Premium KPI Cards Header
     # ---------------------------------------------------------------------------
-    st.divider()
+    st.markdown("<br>", unsafe_allow_html=True)
     m_col1, m_col2, m_col3, m_col4, m_col5 = st.columns(5)
     
     total_demand_tons = mps["total_demand_tons"]
@@ -247,29 +346,69 @@ if run_clicked or "last_result" in st.session_state:
     reorders_needed = len(mrp["reorder_recommendations"])
 
     with m_col1:
-        st.metric("Gross Demand", f"{total_demand_tons:.2f} Tons", f"{sum(inputs.demand_units.values()):,} units")
+        st.markdown(f"""
+            <div class="kpi-card" style="border-top: 4px solid #4338CA;">
+                <div class="kpi-label">Gross Demand</div>
+                <div class="kpi-value">{total_demand_tons:.1f}T</div>
+                <div class="kpi-sub sub-green">{sum(inputs.demand_units.values()):,} units</div>
+            </div>
+        """, unsafe_allow_html=True)
+
     with m_col2:
-        st.metric("Planned Production", f"{total_mps_tons:.2f} Tons", f"{int(total_mps_units):,} units")
+        st.markdown(f"""
+            <div class="kpi-card" style="border-top: 4px solid #10B981;">
+                <div class="kpi-label">Planned Production</div>
+                <div class="kpi-value">{total_mps_tons:.1f}T</div>
+                <div class="kpi-sub sub-green">{int(total_mps_units):,} units</div>
+            </div>
+        """, unsafe_allow_html=True)
+
     with m_col3:
-        st.metric("Capacity Utilization", f"{cap_pct:.1f}%", f"Max: {mps['max_upstream_tons']} Tons")
+        st.markdown(f"""
+            <div class="kpi-card" style="border-top: 4px solid #F59E0B;">
+                <div class="kpi-label">Line Capacity</div>
+                <div class="kpi-value">{cap_pct:.1f}%</div>
+                <div class="kpi-sub sub-amber">Max: {mps['max_upstream_tons']} Tons</div>
+            </div>
+        """, unsafe_allow_html=True)
+
     with m_col4:
-        st.metric("Shortfall SKUs", f"{unmet_skus}", delta="Capacity Constrained" if unmet_skus > 0 else "Fully Satisfied", delta_color="inverse" if unmet_skus > 0 else "normal")
+        st.markdown(f"""
+            <div class="kpi-card" style="border-top: 4px solid {'#EF4444' if unmet_skus > 0 else '#10B981'};">
+                <div class="kpi-label">Shortfall SKUs</div>
+                <div class="kpi-value">{unmet_skus}</div>
+                <div class="kpi-sub {'sub-rose' if unmet_skus > 0 else 'sub-green'}">
+                    {'⚠️ Rationed' if unmet_skus > 0 else '✅ Satisfied'}
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
     with m_col5:
-        st.metric("Reorder Action Items", f"{reorders_needed}", delta="Shortage Risk" if reorders_needed > 0 else "Stocked", delta_color="inverse" if reorders_needed > 0 else "normal")
+        st.markdown(f"""
+            <div class="kpi-card" style="border-top: 4px solid {'#EF4444' if reorders_needed > 0 else '#10B981'};">
+                <div class="kpi-label">Reorder Actions</div>
+                <div class="kpi-value">{reorders_needed}</div>
+                <div class="kpi-sub {'sub-rose' if reorders_needed > 0 else 'sub-green'}">
+                    {'🚨 Shortage Risk' if reorders_needed > 0 else '✅ Fully Stocked'}
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
 
     # ---------------------------------------------------------------------------
     # Main Tabs: MPS/MRP Results, Day-Wise Schedule, Gemini Agent Briefing, Reference, Export
     # ---------------------------------------------------------------------------
     tab_plan, tab_daily, tab_agent, tab_ref, tab_export = st.tabs([
-        "📊 Monthly S&OP Summary (MPS / MRP)",
-        "📅 Day-Wise Dispatch Schedule (Days 1–24)",
+        "📊 Monthly S&OP Summary",
+        "📅 Day-Wise Dispatch (Days 1–24)",
         "🤖 Gemini AI Agent Briefing",
-        "⚙️ BOM & Capacity Reference",
-        "📥 Export Reports"
+        "⚙️ BOM & Line Reference",
+        "📥 Export S&OP Reports"
     ])
 
     # ---------------------------------------------------------------------------
-    # TAB 1: MPS & MRP MONTHLY SUMMARY TABLES AND VISUALIZATIONS
+    # TAB 1: MONTHLY SUMMARY TABLES AND VISUALIZATIONS
     # ---------------------------------------------------------------------------
     with tab_plan:
         st.subheader("📋 Master Production Schedule (MPS) Summary")
@@ -291,16 +430,16 @@ if run_clicked or "last_result" in st.session_state:
 
         if mps["capacity_binding"]:
             st.warning(
-                f"⚠️ **Capacity Constraint Active**: Available upstream line limit is **{mps['max_upstream_tons']} Tons** "
+                f"⚠️ **Capacity Bottleneck Hit**: Shared mixing/pasteurization line limit is **{mps['max_upstream_tons']} Tons** "
                 f"({mps['available_hours']} hours at bottleneck stage: *{mps['bottleneck_stage']}*). "
-                "Production has been rationed according to SKU priority."
+                "Production has been rationed according to ABC SKU contribution margin priority."
             )
 
-        # Bar chart comparing Demand vs Planned Production
-        st.markdown("#### 📈 Demand vs. Planned Production by SKU")
+        st.markdown("#### 📈 Gross Demand vs. Planned Production by SKU")
         df_chart = df_mps.set_index("SKU")[["Gross Demand", "Planned Production"]]
         st.bar_chart(df_chart)
 
+        st.divider()
         st.subheader("📦 Material Requirement Plan (MRP) Summary")
         mrp_rows = get_mrp_summary_table(mrp, inputs.opening_material_inventory, inputs.material_incoming)
         df_mrp = pd.DataFrame(mrp_rows)
@@ -317,24 +456,27 @@ if run_clicked or "last_result" in st.session_state:
         )
 
     # ---------------------------------------------------------------------------
-    # TAB 2: DAY-WISE S&OP DISPATCH SCHEDULE (DAYS 1 TO 24)
+    # TAB 2: DAY-WISE DISPATCH SCHEDULE (DAYS 1 TO 24)
     # ---------------------------------------------------------------------------
     with tab_daily:
         st.subheader("📅 Day-by-Day Master Production Schedule (Days 1 to 24)")
-        st.caption(
-            "Detailed operational dispatch grid allocating planned production units and projected closing inventory "
-            "for each SKU across the 24 working days of the period."
-        )
+        st.caption("Operational dispatch matrix showing daily production runs and closing stock trajectory for each SKU across 24 working days.")
         
         df_daily_mps = pd.DataFrame(daily.get("daily_mps_grid", []))
         st.dataframe(df_daily_mps, use_container_width=True)
 
         st.divider()
+        st.subheader("📊 Daily Production Dispatch Breakdown (Units / Day)")
+        
+        # Prepare daily production bar chart
+        df_prod_only = df_daily_mps[df_daily_mps["Metric"] == "Planned Prod (Units)"].set_index("SKU")
+        day_cols = [f"Day {d}" for d in range(1, 25)]
+        df_prod_chart = df_prod_only[day_cols].T
+        st.bar_chart(df_prod_chart)
+
+        st.divider()
         st.subheader("📦 Day-by-Day Raw Material & Packaging Depletion Schedule")
-        st.caption(
-            "Tracks exact daily inventory balances for raw materials and packaging from Day 1 to Day 24, "
-            "highlighting the **exact day of stockout** if reorders are not initiated within lead times."
-        )
+        st.caption("Tracks inventory levels from Day 1 to Day 24, flagging exact stockout days if material reorders are delayed.")
         
         df_daily_mat = pd.DataFrame(daily.get("daily_material_grid", []))
         st.dataframe(df_daily_mat, use_container_width=True)
@@ -356,7 +498,6 @@ if run_clicked or "last_result" in st.session_state:
             st.warning("⚠️ Please enter a valid Google Gemini API key in the sidebar to generate the AI briefing.")
         else:
             try:
-                # Configure Google Generative AI
                 genai.configure(api_key=api_key)
 
                 system_prompt = f"""
@@ -392,11 +533,14 @@ MRP Data:
 """
 
                 with st.spinner(f"Querying Google Gemini ({model_choice}) for executive briefing..."):
-                    # Call Gemini Model
                     model = genai.GenerativeModel(model_choice)
                     response = model.generate_content(system_prompt)
                     
-                    st.markdown(response.text)
+                    st.markdown(f"""
+                        <div class="ai-box">
+                            {response.text}
+                        </div>
+                    """, unsafe_allow_html=True)
                     st.success("✅ AI Executive Briefing generated successfully via Gemini API.")
 
             except Exception as e:
@@ -452,7 +596,7 @@ MRP Data:
         with exp_col1:
             csv_mps = df_mps.to_csv(index=False).encode('utf-8')
             st.download_button(
-                label="📄 Monthly MPS Report (CSV)",
+                label="📄 Monthly MPS (CSV)",
                 data=csv_mps,
                 file_name=f"MPS_Monthly_{inputs.period_label.replace(' ', '_')}.csv",
                 mime="text/csv"
@@ -461,7 +605,7 @@ MRP Data:
         with exp_col2:
             csv_mrp = df_mrp.to_csv(index=False).encode('utf-8')
             st.download_button(
-                label="📄 Monthly MRP Report (CSV)",
+                label="📄 Monthly MRP (CSV)",
                 data=csv_mrp,
                 file_name=f"MRP_Monthly_{inputs.period_label.replace(' ', '_')}.csv",
                 mime="text/csv"
@@ -479,7 +623,7 @@ MRP Data:
         with exp_col4:
             json_data = json.dumps(result, indent=2).encode('utf-8')
             st.download_button(
-                label="📦 Full S&OP Plan (JSON)",
+                label="📦 Full S&OP (JSON)",
                 data=json_data,
                 file_name=f"SOP_Full_Plan_{inputs.period_label.replace(' ', '_')}.json",
                 mime="application/json"
