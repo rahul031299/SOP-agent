@@ -1,5 +1,5 @@
 """
-Streamlit front-end for the Ice Cream S&OP Intelligence Agent powered by Google Gemini API.
+Streamlit front-end for the Ice Cream S&OP Agent powered by Google Gemini API.
 
 Architecture:
   1. User inputs operational parameters (demand, inventory, manpower, incoming shipments).
@@ -430,7 +430,7 @@ if run_clicked or "last_result" in st.session_state:
 
         if mps["capacity_binding"]:
             st.warning(
-                f"⚠️ **Capacity Bottleneck Hit**: Shared mixing/pasteurization line limit is **{mps['max_upstream_tons']} Tons** "
+                f"⚠️ **Capacity Bottleneck Active**: Shared mixing/pasteurization line limit is **{mps['max_upstream_tons']} Tons** "
                 f"({mps['available_hours']} hours at bottleneck stage: *{mps['bottleneck_stage']}*). "
                 "Production has been rationed according to ABC SKU contribution margin priority."
             )
@@ -460,6 +460,23 @@ if run_clicked or "last_result" in st.session_state:
     # ---------------------------------------------------------------------------
     with tab_daily:
         st.subheader("📅 Day-by-Day Master Production Schedule (Days 1 to 24)")
+        
+        # Display Daily Operating Constraints
+        daily_hours = mps["available_hours"] / 24.0
+        daily_max_tons = mps["max_upstream_tons"] / 24.0
+        daily_prod_tons = total_mps_tons / 24.0
+        
+        d_c1, d_c2, d_c3, d_c4 = st.columns(4)
+        with d_c1:
+            st.metric("Operating Hours / Day", f"{daily_hours:.1f} Hours", f"{inputs.shifts_per_day} shifts/day")
+        with d_c2:
+            st.metric("Daily Line Capacity Limit", f"{daily_max_tons:.2f} Tons/Day", f"Bottleneck: {mps['bottleneck_stage']}")
+        with d_c3:
+            st.metric("Daily Planned Output", f"{daily_prod_tons:.2f} Tons/Day", f"{int(total_mps_units/24):,} units/day")
+        with d_c4:
+            st.metric("Daily Capacity Loading", f"{(daily_prod_tons/daily_max_tons*100):.1f}%", f"{inputs.workers_available}/{inputs.workers_required_per_shift} Workers")
+
+        st.markdown("<br>", unsafe_allow_html=True)
         st.caption("Operational dispatch matrix showing daily production runs and closing stock trajectory for each SKU across 24 working days.")
         
         df_daily_mps = pd.DataFrame(daily.get("daily_mps_grid", []))
@@ -548,11 +565,24 @@ MRP Data:
                 st.info("Tip: Ensure your API key is valid and check model availability in your region.")
 
     # ---------------------------------------------------------------------------
-    # TAB 4: REFERENCE DATA
+    # TAB 4: REFERENCE DATA & MASTER EXCEL DOWNLOAD
     # ---------------------------------------------------------------------------
     with tab_ref:
         st.subheader("⚙️ Industry Process & BOM Reference Specs")
         
+        master_excel_path = os.path.join(CURRENT_DIR, "SOP_Master_Constraints_and_Processes.xlsx")
+        if os.path.exists(master_excel_path):
+            with open(master_excel_path, "rb") as f:
+                excel_bytes = f.read()
+            st.download_button(
+                label="📊 Download Master S&OP Constraints & Processes Workbook (.xlsx)",
+                data=excel_bytes,
+                file_name="SOP_Master_Constraints_and_Processes.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                type="primary"
+            )
+
+        st.divider()
         ref_col1, ref_col2 = st.columns(2)
         with ref_col1:
             st.markdown("#### Finished Goods SKU Specs")
@@ -589,7 +619,7 @@ MRP Data:
     # ---------------------------------------------------------------------------
     with tab_export:
         st.subheader("📥 Export S&OP Reports for Phase 3 Deliverables")
-        st.write("Download period monthly & day-wise MPS, MRP, and raw JSON plans for report documentation and presentations.")
+        st.write("Download period monthly & day-wise MPS, MRP, raw JSON, and Master Constraints Excel workbook for report documentation.")
         
         exp_col1, exp_col2, exp_col3, exp_col4 = st.columns(4)
         
@@ -627,6 +657,15 @@ MRP Data:
                 data=json_data,
                 file_name=f"SOP_Full_Plan_{inputs.period_label.replace(' ', '_')}.json",
                 mime="application/json"
+            )
+
+        st.divider()
+        if os.path.exists(master_excel_path):
+            st.download_button(
+                label="📊 Download Master Constraints & Processes Workbook (.xlsx)",
+                data=excel_bytes,
+                file_name="SOP_Master_Constraints_and_Processes.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
 st.divider()
