@@ -16,7 +16,14 @@ import os
 import json
 import pandas as pd
 import streamlit as st
-import google.generativeai as genai
+
+# Safe import for Google Generative AI to prevent app crash if package is installing/missing
+try:
+    import google.generativeai as genai
+    HAS_GEMINI = True
+except ImportError:
+    genai = None
+    HAS_GEMINI = False
 
 from sop_engine import (
     PeriodInputs, run_period_plan, SKUS, ALL_MATERIALS, RAW_MATERIALS, PACKAGING_MATERIALS,
@@ -294,7 +301,14 @@ if run_clicked or "last_result" in st.session_state:
     with tab_agent:
         st.subheader("🤖 S&OP AI Agent Executive Briefing")
         
-        if not api_key:
+        if not HAS_GEMINI:
+            st.error(
+                "⚠️ **Package Missing**: `google-generativeai` is not installed on this server/environment.\n\n"
+                "To fix this on Streamlit Cloud or locally, make sure your **`requirements.txt`** contains:\n"
+                "```text\nstreamlit>=1.35.0\ngoogle-generativeai>=0.8.0\npandas>=2.0.0\n```\n"
+                "Then reboot your app on Streamlit Cloud."
+            )
+        elif not api_key:
             st.warning("⚠️ Please enter a valid Google Gemini API key in the sidebar to generate the AI briefing.")
         else:
             try:
