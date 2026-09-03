@@ -297,6 +297,56 @@ def run_period_plan(inp: PeriodInputs) -> dict:
     return {"mps": mps, "mrp": mrp}
 
 
+def get_mps_summary_table(mps: dict, demand_units: Dict[str, float], opening_fg: Dict[str, float]) -> list:
+    """Returns a list of dicts suitable for DataFrame creation describing MPS per SKU."""
+    rows = []
+    for sku in SKUS:
+        dem = demand_units.get(sku, 0.0)
+        open_inv = opening_fg.get(sku, 0.0)
+        net_dem = max(0.0, dem - open_inv)
+        plan_prod = mps["mps_units"].get(sku, 0.0)
+        unmet = mps["unmet_demand_units"].get(sku, 0.0)
+        close_inv = mps["closing_fg_inventory"].get(sku, 0.0)
+        rows.append({
+            "SKU": sku,
+            "Gross Demand": dem,
+            "Opening Inventory": open_inv,
+            "Net Demand": net_dem,
+            "Planned Production": plan_prod,
+            "Unmet Demand": unmet,
+            "Closing Inventory": close_inv
+        })
+    return rows
+
+
+def get_mrp_summary_table(mrp: dict, opening_mat: Dict[str, float], incoming_mat: Dict[str, float]) -> list:
+    """Returns a list of dicts suitable for DataFrame creation describing MRP per material."""
+    rows = []
+    reorder_map = mrp.get("reorder_recommendations", {})
+    for mat in ALL_MATERIALS:
+        gross = mrp["gross_requirement"].get(mat, 0.0)
+        on_hand = opening_mat.get(mat, 0.0)
+        incoming = incoming_mat.get(mat, 0.0)
+        net = mrp["net_requirement"].get(mat, 0.0)
+        reorder_info = reorder_map.get(mat, {})
+        rec_order = reorder_info.get("recommended_order_qty", 0.0)
+        lead_time = reorder_info.get("lead_time_days", LEAD_TIME_DAYS.get(mat, "-"))
+        
+        category = "Raw Material" if mat in RAW_MATERIALS else "Packaging"
+        rows.append({
+            "Material": mat,
+            "Category": category,
+            "Gross Requirement": gross,
+            "On Hand Inventory": on_hand,
+            "Incoming (In-Transit)": incoming,
+            "Net Requirement": net,
+            "Recommended Order Qty": rec_order if net > 0 else 0.0,
+            "Lead Time (Days)": lead_time,
+            "Status": "⚠️ REORDER NEEDED" if net > 0 else "✅ OK"
+        })
+    return rows
+
+
 if __name__ == "__main__":
     import json
 
