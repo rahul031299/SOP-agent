@@ -216,15 +216,20 @@ with st.sidebar:
     if not default_key:
         default_key = os.environ.get("GEMINI_API_KEY", os.environ.get("GOOGLE_API_KEY", ""))
 
-    api_key = st.text_input(
-        "Google Gemini API Key",
-        value=default_key,
+    user_api_key = st.text_input(
+        "Google Gemini API Key (Optional)",
+        value="",
         type="password",
-        help="Get your free API key at https://aistudio.google.com/"
+        help="Leave blank to use pre-configured system key, or enter your own key."
     )
     
+    api_key = user_api_key.strip() if user_api_key.strip() else default_key
+
     if api_key:
-        st.success("✅ API Key Connected")
+        if user_api_key.strip():
+            st.success("✅ Custom API Key Connected")
+        else:
+            st.success("✅ System API Key Connected (Hidden)")
     else:
         st.info("💡 Enter key to unlock AI Agent Briefings")
 
